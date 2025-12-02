@@ -5,11 +5,17 @@ The Term Project is a group assignment that is based on the content and sequence
 Details
 The Term Project deliverables include: 
 
-Data store and ETL process designs, as well as the Python implementation of the end-to-end data management application
-Live presentation with a demo of an API or an interface for interaction with the application. The presentation must contain:
-Background and definition of the data analytics problem
-Data source specification and procurement details
-Implemented design choices and the rationale for using the selected technologies
-Applicable data quality dimensions, licensing, scalability, and any cost implications
-Conclusion and future recommendations
+1. Data store and ETL process designs, as well as the Python implementation of the end-to-end data management application
+2. Live presentation with a demo of an API or an interface for interaction with the application. The presentation must contain:
+
+   Background and definition of the data analytics problem
+
+   Data source specification and procurement details
+
+   Implemented design choices and the rationale for using the selected technologies
+
+   Applicable data quality dimensions, licensing, scalability, and any cost implications
+
+   Conclusion and future recommendations
+   
 During the last 2 class sessions, each student group will be presenting their slide deck with participation of every group member. 
