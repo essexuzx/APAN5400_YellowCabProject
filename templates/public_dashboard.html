@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Dashboard - NYC Taxi Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            color: white;
+            font-size: 1.8em;
+        }
+        
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .navbar a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .info-card h3 {
+            color: #11998e;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .info-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3em;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .wait-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .wait-very-short {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .wait-short {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .wait-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .wait-long {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>👥 Public Rider Dashboard</h1>
+        <a href="/">← Back to Home</a>
+    </div>
+    
+    <div class="info-cards">
+        <div class="info-card">
+            <h3>🚖 Find Available Taxis</h3>
+            <p>Check which zones have the most taxis available. Busier zones mean shorter wait times!</p>
+        </div>
+        <div class="info-card">
+            <h3>💰 Calculate Your Fare</h3>
+            <p>Use our fare calculator to estimate trip costs based on historical data before you book.</p>
+        </div>
+        <div class="info-card">
+            <h3>⏰ Best Times to Travel</h3>
+            <p>Avoid peak hours for faster pickups. Check hourly and daily patterns below.</p>
+        </div>
+    </div>
+    
+    <div class="chart-card" style="grid-column: span 2; margin-bottom: 30px;">
+        <h2>💰 Fare Calculator - Estimate Your Trip Cost</h2>
+        <p style="color: #666; margin-bottom: 20px;">Select your pickup and dropoff zones to estimate fare based on historical data</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Pickup Zone:</label>
+                <select id="pickupZone" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 1em;">
+                    <option value="">Select pickup location...</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Dropoff Zone:</label>
+                <select id="dropoffZone" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 1em;">
+                    <option value="">Select dropoff location...</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="calculateBtn" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; font-weight: 600;">
+            Calculate Fare
+        </button>
+        
+        <div id="fareResult" style="margin-top: 30px; display: none;">
+            <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #11998e;">
+                <h3 style="color: #333; margin-bottom: 15px;">Trip Estimate</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">From</div>
+                        <div style="font-weight: 600; color: #333;" id="fromZone">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">To</div>
+                        <div style="font-weight: 600; color: #333;" id="toZone">-</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">Average Fare</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #11998e;" id="avgFareResult">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">Total Cost (incl. tip)</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #38ef7d;" id="totalCostResult">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">Distance</div>
+                        <div style="font-size: 1.3em; font-weight: 600; color: #333;" id="distanceResult">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">Duration</div>
+                        <div style="font-size: 1.3em; font-weight: 600; color: #333;" id="durationResult">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9em; color: #666;">Historical Trips</div>
+                        <div style="font-size: 1.3em; font-weight: 600; color: #333;" id="tripCountResult">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="fareError" style="margin-top: 20px; display: none; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+            <p style="color: #856404; margin: 0;">No historical data found for this route. Try a different combination.</p>
+        </div>
+    </div>
+    
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h2>Busiest Pickup Zones</h2>
+            <div class="chart-container">
+                <canvas id="busiestZonesChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h2>Demand by Hour</h2>
+            <div class="chart-container">
+                <canvas id="hourlyDemandChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h2>Demand by Day of Week</h2>
+            <div class="chart-container">
+                <canvas id="dailyDemandChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h2>Average Trip Metrics</h2>
+            <div class="chart-container">
+                <canvas id="tripMetricsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h2>🔥 Top 10 Popular Routes</h2>
+        <table id="routesTable">
+            <thead>
+                <tr>
+                    <th>From Zone</th>
+                    <th>To Zone</th>
+                    <th>Trip Count</th>
+                    <th>Avg Fare</th>
+                    <th>Avg Distance</th>
+                    <th>Avg Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="6" style="text-align: center; padding: 40px; color: #999;">Loading data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function formatNumber(value) {
+            return parseFloat(value).toLocaleString('en-US');
+        }
+        
+        function formatCurrency(value) {
+            return '$' + parseFloat(value).toFixed(2);
+        }
+        
+        function getWaitBadgeClass(wait) {
+            if (wait === 'Very Short') return 'wait-very-short';
+            if (wait === 'Short') return 'wait-short';
+            if (wait === 'Medium') return 'wait-medium';
+            return 'wait-long';
+        }
+        
+        // Load zones for fare calculator
+        fetch('/api/company/zones')
+            .then(r => r.json())
+            .then(zones => {
+                const pickupSelect = document.getElementById('pickupZone');
+                const dropoffSelect = document.getElementById('dropoffZone');
+                
+                zones.forEach(zone => {
+                    const option1 = document.createElement('option');
+                    option1.value = zone.locationid;
+                    option1.textContent = `${zone.zone} (${zone.borough})`;
+                    pickupSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = zone.locationid;
+                    option2.textContent = `${zone.zone} (${zone.borough})`;
+                    dropoffSelect.appendChild(option2);
+                });
+            })
+            .catch(err => console.error('Error loading zones:', err));
+        
+        // Calculate fare button
+        document.getElementById('calculateBtn').addEventListener('click', () => {
+            const pickup = document.getElementById('pickupZone').value;
+            const dropoff = document.getElementById('dropoffZone').value;
+            
+            if (!pickup || !dropoff) {
+                alert('Please select both pickup and dropoff zones');
+                return;
+            }
+            
+            document.getElementById('fareResult').style.display = 'none';
+            document.getElementById('fareError').style.display = 'none';
+            document.getElementById('calculateBtn').textContent = 'Calculating...';
+            document.getElementById('calculateBtn').disabled = true;
+            
+            fetch(`/api/company/fare-estimate?pickup=${pickup}&dropoff=${dropoff}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('calculateBtn').textContent = 'Calculate Fare';
+                    document.getElementById('calculateBtn').disabled = false;
+                    
+                    if (data.success) {
+                        document.getElementById('fareResult').style.display = 'block';
+                        document.getElementById('fromZone').textContent = `${data.pickup_zone}, ${data.pickup_borough}`;
+                        document.getElementById('toZone').textContent = `${data.dropoff_zone}, ${data.dropoff_borough}`;
+                        document.getElementById('avgFareResult').textContent = formatCurrency(data.avg_fare);
+                        document.getElementById('totalCostResult').textContent = formatCurrency(data.avg_total);
+                        document.getElementById('distanceResult').textContent = data.avg_distance.toFixed(2) + ' mi';
+                        document.getElementById('durationResult').textContent = data.avg_duration_min.toFixed(0) + ' min';
+                        document.getElementById('tripCountResult').textContent = formatNumber(data.trip_count);
+                    } else {
+                        document.getElementById('fareError').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('calculateBtn').textContent = 'Calculate Fare';
+                    document.getElementById('calculateBtn').disabled = false;
+                    alert('Error calculating fare. Please try again.');
+                });
+        });
+        
+        // Busiest Zones Chart
+        fetch('/api/public/busiest-zones')
+            .then(r => r.json())
+            .then(data => {
+                const ctx = document.getElementById('busiestZonesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => 'Zone ' + d.zone_id),
+                        datasets: [{
+                            label: 'Number of Trips',
+                            data: data.map(d => d.trip_count),
+                            backgroundColor: 'rgba(17, 153, 142, 0.6)',
+                            borderColor: 'rgba(17, 153, 142, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        
+        // Hourly Demand Chart
+        fetch('/api/public/demand-by-hour')
+            .then(r => r.json())
+            .then(data => {
+                const ctx = document.getElementById('hourlyDemandChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.hour + ':00'),
+                        datasets: [{
+                            label: 'Trip Count',
+                            data: data.map(d => d.trip_count),
+                            borderColor: 'rgba(56, 239, 125, 1)',
+                            backgroundColor: 'rgba(56, 239, 125, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        
+        // Daily Demand Chart
+        fetch('/api/public/demand-by-day')
+            .then(r => r.json())
+            .then(data => {
+                const ctx = document.getElementById('dailyDemandChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.day_name),
+                        datasets: [{
+                            label: 'Trip Count',
+                            data: data.map(d => d.trip_count),
+                            backgroundColor: 'rgba(17, 153, 142, 0.6)',
+                            borderColor: 'rgba(17, 153, 142, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        
+        // Trip Metrics Chart
+        fetch('/api/public/busiest-zones')
+            .then(r => r.json())
+            .then(data => {
+                const top5 = data.slice(0, 5);
+                const ctx = document.getElementById('tripMetricsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: top5.map(d => 'Zone ' + d.zone_id),
+                        datasets: [
+                            {
+                                label: 'Avg Fare ($)',
+                                data: top5.map(d => d.avg_fare),
+                                backgroundColor: 'rgba(56, 239, 125, 0.6)'
+                            },
+                            {
+                                label: 'Avg Distance (mi)',
+                                data: top5.map(d => d.avg_distance),
+                                backgroundColor: 'rgba(17, 153, 142, 0.6)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        
+        // Popular Routes Table
+        fetch('/api/public/popular-routes')
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.querySelector('#routesTable tbody');
+                tbody.innerHTML = data.map(route => `
+                    <tr>
+                        <td>Zone ${route.pickup_zone}</td>
+                        <td>Zone ${route.dropoff_zone}</td>
+                        <td>${formatNumber(route.trip_count)}</td>
+                        <td>${formatCurrency(route.avg_fare)}</td>
+                        <td>${route.avg_distance.toFixed(2)} mi</td>
+                        <td>${route.avg_duration_min ? route.avg_duration_min.toFixed(1) + ' min' : 'N/A'}</td>
+                    </tr>
+                `).join('');
+            });
+        
+        // Wait Times Table
+        fetch('/api/public/wait-times')
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.querySelector('#waitTimesTable tbody');
+                tbody.innerHTML = data.map(zone => `
+                    <tr>
+                        <td>Zone ${zone.zone_id}</td>
+                        <td>${formatNumber(zone.trips_per_hour)}</td>
+                        <td><span class="wait-badge ${getWaitBadgeClass(zone.estimated_wait)}">${zone.estimated_wait}</span></td>
+                    </tr>
+                `).join('');
+            });
+    </script>
+</body>
+</html>
